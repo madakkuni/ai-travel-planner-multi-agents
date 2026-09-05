@@ -1,4 +1,5 @@
 from langgraph.graph import StateGraph, START, END
+from app.nodes.travel_details_node import travel_details_node
 from app.nodes.flight_node import flight_node
 from app.nodes.hotel_node import hotel_node
 from app.graph.state import TravelState
@@ -13,11 +14,13 @@ def create_travel_graph():
         graph = StateGraph(TravelState)
 
         # Define the nodes in the graph
+        graph.add_node("travel_details_node", travel_details_node)
         graph.add_node("flight_node", flight_node)
         graph.add_node("hotel_node", hotel_node)
 
         # Define the edges between nodes
-        graph.add_edge(START, "flight_node")
+        graph.add_edge(START, "travel_details_node")
+        graph.add_edge("travel_details_node", "flight_node")
         graph.add_edge("flight_node", "hotel_node")
         graph.add_edge("hotel_node", END)
 

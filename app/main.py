@@ -21,6 +21,13 @@ def main():
         initial_state = {
             "messages": [HumanMessage(content=user_input)],
             "user_query": user_input,
+            "origin": "",
+            "destination": "",
+            "duration_days": 0,
+            "departure_date": None,
+            "adults": 1,
+            "children": 0,
+            "budget": None,
             "flight_results": "",
             "hotel_results": "",
             "itinerary": "",

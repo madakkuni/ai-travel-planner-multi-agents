@@ -10,8 +10,15 @@ def flight_node(state):
     try:
         logger.info("Flight node started")
 
-        query = state["user_query"]
-        flight_results = search_flights(query)
+        origin = state["origin"]
+        destination = state["destination"]
+        departure_date = state["departure_date"]
+        adults = state["adults"]
+        children = state["children"]
+
+        logger.info(f"Searching flights from {origin} to {destination} on {departure_date}")
+
+        flight_results = search_flights(origin, destination, departure_date, adults, children)
 
         logger.info("Flight information fetched successfully")
 

@@ -1,20 +1,36 @@
 import os
+
 import requests
 from dotenv import load_dotenv
+
+from app.tools.airport_tool import get_airport_code
 
 load_dotenv()
 
 API_KEY = os.getenv("AVIATIONSTACK_API_KEY")
 API_URL = os.getenv("AVIATIONSTACK_API_URL")
 
-def search_flights(query):
-    params = {"access_key": API_KEY, "limit": 5}
-    response = requests.get(API_URL, params=params)
-    data = response.json()
-    flights = []
 
-    if "data" in data:
-        for flight in data["data"][:5]:
+def search_flights(origin, destination, departure_date, adults, children):
+    try:
+        origin_code = get_airport_code(origin)
+        destination_code = get_airport_code(destination)
+
+        params = {
+            "access_key": API_KEY,
+            "dep_iata": origin_code,
+            "arr_iata": destination_code,
+            "flight_status": "scheduled",
+            "limit": 5
+        }
+
+        response = requests.get(API_URL, params=params, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+        flights = []
+
+        for flight in data.get("data", []):
             airline = flight.get("airline", {}).get("name", "Unknown")
             departure = flight.get("departure", {}).get("airport", "Unknown")
             departure_time = flight.get("departure", {}).get("scheduled", "Unknown")
@@ -31,9 +47,10 @@ def search_flights(query):
                 f"Status: {status}"
             )
 
-    return "\n\n".join(flights)
+        if not flights:
+            return f"No scheduled flights found from {origin} to {destination}"
 
+        return "\n\n".join(flights)
 
-if __name__ == "__main__":
-    result = search_flights("flights from Bangalore to Delhi")
-    print(result)
+    except (requests.RequestException, ValueError) as e:
+        raise RuntimeError(f"Flight search failed: {str(e)}")

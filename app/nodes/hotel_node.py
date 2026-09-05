@@ -1,5 +1,3 @@
-from langchain_core.messages import AIMessage
-
 from app.core.logger import get_logger
 from app.tools.tavily_tool import tavily_search
 
@@ -10,23 +8,27 @@ def hotel_node(state):
     try:
         logger.info("Hotel node started")
 
-        query = f"Best hotels for {state['user_query']}"
+        destination = state["destination"]
+        budget = state.get("budget")
+
+        query = f"Best hotels within 3 km of {destination} city center"
+
+        if budget:
+            query += f" within a total trip budget of {budget}"
+
+        logger.info(f"Searching hotels with query: {query}")
+
         hotel_results = tavily_search(query)
 
         logger.info("Hotel information fetched successfully")
 
         return {
-            "hotel_results": hotel_results,
-            "error": "",
-            "messages": [AIMessage(content="Hotel information fetched successfully")]
+            "hotel_results": hotel_results
         }
 
     except Exception as e:
-        error_message = f"Hotel search failed: {str(e)}"
-        logger.exception(error_message)
+        logger.exception(f"Hotel search failed: {str(e)}")
 
         return {
-            "hotel_results": "",
-            "error": error_message,
-            "messages": [AIMessage(content="Unable to fetch hotel information")]
+            "hotel_results": f"Hotel search failed: {str(e)}"
         }
