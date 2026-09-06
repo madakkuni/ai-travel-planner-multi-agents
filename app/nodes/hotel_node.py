@@ -1,5 +1,8 @@
+import asyncio
+
 from app.core.logger import get_logger
-from app.tools.tavily_tool import tavily_search
+from app.mcp.mcp_client import mcp_search_tool
+
 
 logger = get_logger(__name__)
 
@@ -11,24 +14,43 @@ def hotel_node(state):
         destination = state["destination"]
         budget = state.get("budget")
 
-        query = f"Best hotels within 3 km of {destination} city center"
+        query = f"Best hotels in {destination} city center"
 
         if budget:
-            query += f" within a total trip budget of {budget}"
+            query += f" within a budget of {budget}"
 
-        logger.info(f"Searching hotels with query: {query}")
+        logger.info("Searching hotels with query: %s", query)
 
-        hotel_results = tavily_search(query)
+        search_response = asyncio.run(
+            mcp_search_tool(query)
+        )
 
-        logger.info("Hotel information fetched successfully")
+        results = search_response.get("results", [])
+
+        hotels = []
+
+        for result in results:
+            hotels.append(
+                {
+                    "name": result.get("title"),
+                    "description": result.get("content", "")[:500],
+                    "url": result.get("url"),
+                }
+            )
+
+        logger.info(
+            "Hotel information fetched successfully | count=%s",
+            len(hotels),
+        )
 
         return {
-            "hotel_results": hotel_results
+            "hotel_results": hotels
         }
 
     except Exception as e:
-        logger.exception(f"Hotel search failed: {str(e)}")
+        logger.exception("Hotel search failed")
 
         return {
-            "hotel_results": f"Hotel search failed: {str(e)}"
+            "hotel_results": [],
+            "hotel_error": str(e),
         }
