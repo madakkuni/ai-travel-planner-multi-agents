@@ -1,6 +1,6 @@
 from app.core.llm import get_llm
 from app.core.logger import get_logger
-from app.models.travel_details import TravelDetails
+from app.models.travel_details_model import TravelDetails
 from app.prompts.travel_details_prompt import TRAVEL_DETAILS_PROMPT
 
 logger = get_logger(__name__)
@@ -11,7 +11,7 @@ structured_llm = llm.with_structured_output(TravelDetails)
 def travel_details_node(state):
     try:
         logger.info("Travel details extraction started")
-        
+
         query = state["user_query"]
         prompt = TRAVEL_DETAILS_PROMPT.format(query=query)
         travel_details = structured_llm.invoke(prompt)
