@@ -1,13 +1,19 @@
 import os
-from dotenv import load_dotenv
-import asyncio
-from langchain_mcp_adapters.client import MultiServerMCPClient
+import json
 from typing import Any
-import json   
+
+from dotenv import load_dotenv
+from langchain_mcp_adapters.client import MultiServerMCPClient
+
+from app.core.logger import get_logger
+
 
 load_dotenv()
 
+logger = get_logger(__name__)
+
 TAVILY_MCP_URL = os.getenv("TAVILY_MCP_URL")
+
 
 client = MultiServerMCPClient(
     {
@@ -22,52 +28,72 @@ client = MultiServerMCPClient(
 SEARCH_TOOL = None
 
 
-# Connect to the MCP server and discover available tools.
-async def initialize_mcp() -> None:
+async def initialize_mcp():
     global SEARCH_TOOL
+
+    if SEARCH_TOOL is not None:
+        logger.info("MCP already initialized")
+        return
+
+    logger.info("MCP initialization started")
 
     tools = await client.get_tools()
 
-    print("Available MCP tools:")
+    logger.info(
+        "MCP tools discovered: %s",
+        [tool.name for tool in tools]
+    )
 
     for tool in tools:
-        print(f"Tool: {tool.name}, Description: {tool.description}")
-
         if tool.name == "tavily_search":
             SEARCH_TOOL = tool
+            break
 
     if SEARCH_TOOL is None:
-        raise RuntimeError("tavily_search tool was not found.")
+        raise RuntimeError(
+            "tavily_search tool was not found."
+        )
 
-    print(f"Search tool initialized: {SEARCH_TOOL.name}")
+    logger.info(
+        "MCP initialization completed | tool=%s",
+        SEARCH_TOOL.name
+    )
 
 
-# Execute the Tavily search tool.
-async def mcp_search_tool(query: str) -> Any:
+async def mcp_search_tool(query: str) -> dict[str, Any]:
     if SEARCH_TOOL is None:
         await initialize_mcp()
 
-    search_arguments = {"query": query}
+    logger.info(
+        "MCP search started | query=%s",
+        query
+    )
 
-    result = await SEARCH_TOOL.ainvoke(search_arguments)
+    result = await SEARCH_TOOL.ainvoke(
+        {"query": query}
+    )
+
+    logger.info(
+        "MCP search completed"
+    )
 
     return parse_search_result(result)
 
-# Convert MCP TextContent into Python dictionary.
-def parse_search_result(result: Any) -> dict[str, Any]:
 
+def parse_search_result(result: Any) -> dict[str, Any]:
     if not result:
         return {}
 
     first_result = result[0]
 
-    # MCP result returned as dictionary.
     if isinstance(first_result, dict):
         text = first_result.get("text")
-
-    # MCP result returned as TextContent object.
     else:
-        text = getattr(first_result, "text", None)
+        text = getattr(
+            first_result,
+            "text",
+            None
+        )
 
     if not text:
         raise RuntimeError(

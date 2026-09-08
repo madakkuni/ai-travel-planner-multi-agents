@@ -29,7 +29,11 @@ def setup_logging():
 
     root_logger = logging.getLogger()
 
-    if root_logger.handlers:
+    if any(
+        isinstance(handler, logging.FileHandler)
+        and Path(handler.baseFilename) == log_file.resolve()
+        for handler in root_logger.handlers
+    ):
         return
 
     root_logger.setLevel(LOG_LEVEL)

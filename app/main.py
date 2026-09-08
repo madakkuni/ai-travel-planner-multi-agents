@@ -1,6 +1,12 @@
 from fastapi import FastAPI
 
+from app.core.logger import get_logger, setup_logging
 from app.api.travel_route import router as travel_router
+
+
+setup_logging()
+logger = get_logger(__name__)
+logger.info("Application started")
 
 
 # Create the FastAPI application.

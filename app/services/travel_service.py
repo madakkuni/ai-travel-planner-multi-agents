@@ -1,3 +1,4 @@
+# travel_service.py
 import uuid
 
 from langchain_core.messages import HumanMessage
@@ -8,7 +9,7 @@ from app.graph.workflow import create_travel_graph
 logger = get_logger(__name__)
 
 
-def process_travel_request(user_query):
+async def process_travel_request(user_query):
     try:
         logger.info("Processing travel request")
 
@@ -34,7 +35,7 @@ def process_travel_request(user_query):
             "hotel_results": ""
         }
 
-        result = app.invoke(initial_state, config=config)
+        result = await app.ainvoke(initial_state, config=config)
 
         logger.info("Travel request processed successfully")
 

@@ -14,11 +14,11 @@ class TravelRequest(BaseModel):
 
 
 @router.post("/travel")
-def create_travel_plan(request: TravelRequest):
+async def create_travel_plan(request: TravelRequest):
     try:
         logger.info("Travel API request received")
 
-        result = process_travel_request(request.user_query)
+        result = await process_travel_request(request.user_query)
 
         logger.info("Travel API request completed successfully")
 
